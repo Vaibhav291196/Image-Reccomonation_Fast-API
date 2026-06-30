@@ -1,220 +1,415 @@
-# 🖼️ Image Recommendation System using DenseNet121 and FastAPI
+# 🌸 AI-Based Flower Image Recommendation System
 
-A content-based image recommendation system built with **FastAPI**, **PyTorch**, and **DenseNet121**. The application supports both:
-
-- 🔍 Text-to-Image Retrieval
-- 📷 Image-to-Image Retrieval
-
-The system extracts deep visual features using a pretrained DenseNet121 model and returns the most relevant images based on visual similarity or textual descriptions.
+An AI-powered recommendation system that recommends flower images based on **text descriptions** or **uploaded flower images**. The project combines **Computer Vision**, **Natural Language Processing**, and **Deep Learning** techniques to build a multimodal content-based image retrieval system deployed using **FastAPI**.
 
 ---
 
-## 🚀 Features
+# 📖 Project Overview
 
-### 1. Text-Based Image Retrieval
-Users provide a text query, and the system retrieves the most relevant image from the dataset using TF-IDF based keyword matching.
+This project consists of two major modules:
 
-### 2. Image-Based Recommendation
-Users upload an image, and the system returns visually similar images using deep feature embeddings extracted from DenseNet121.
+1. **Feature Generation Pipeline (`image_desc_feat.py`)**
+   - Generates image captions using a pretrained image captioning model.
+   - Extracts deep visual features using DenseNet121.
+   - Stores captions and image embeddings for fast inference.
 
-### 3. REST API Support
-Built using FastAPI for fast and scalable deployment.
-
-### 4. Deep Learning Powered
-Uses pretrained DenseNet121 for feature extraction without requiring additional model training.
+2. **Recommendation API (`app.py`)**
+   - Provides REST APIs for text-based and image-based recommendations.
+   - Uses precomputed image features to perform efficient image retrieval.
 
 ---
 
-## 🏗️ Project Architecture
+# ✨ Features
+
+- 🌼 Automatic Image Caption Generation
+- 🧠 Deep Feature Extraction using DenseNet121
+- 🔍 Text-Based Flower Recommendation
+- 🖼 Image Similarity Recommendation
+- 🚀 FastAPI REST API
+- ⚡ Fast inference using precomputed embeddings
+- 💻 CPU compatible
+- 📦 Easy deployment
+
+---
+
+# 🛠 Technology Stack
+
+| Category | Technology |
+|-----------|------------|
+| Language | Python |
+| Backend | FastAPI |
+| Deep Learning | PyTorch |
+| Computer Vision | TorchVision |
+| NLP | Hugging Face Transformers |
+| Image Processing | OpenCV, Pillow |
+| Data Handling | Pandas, NumPy |
+| Machine Learning | Scikit-Learn |
+
+---
+
+# 📂 Project Structure
 
 ```text
-User Query
-    │
-    ├── Text Query
-    │       │
-    │       └── TF-IDF Matching
-    │               │
-    │               └── Most Relevant Image
-    │
-    └── Uploaded Image
-            │
-            └── DenseNet121 Feature Extraction
-                    │
-                    └── Cosine Similarity
-                            │
-                            └── Similar Images
-```
+Flower-Recommendation-System/
 
----
-
-## 📂 Project Structure
-
-```text
-project/
+│── app.py
+│── image_desc_feat.py
+│── Image_data.csv
+│── image_features1
+│── requirements.txt
+│── README.md
 │
-├── Images_1/                 # Dataset Images
-├── images/                   # Uploaded Images
-├── dataset.xlsx              # Image Metadata
-├── app.py                    # FastAPI Application
-├── requirements.txt
-└── README.md
+├── jpg/
+│     ├── image1.jpg
+│     ├── image2.jpg
+│     └── ...
+│
+└── uploaded_images/
 ```
 
 ---
 
-## 🧠 Technologies Used
+# 🔄 Project Workflow
 
-- Python
-- FastAPI
-- PyTorch
-- TorchVision
-- DenseNet121
-- OpenCV
-- Pandas
-- NumPy
-- Scikit-Learn
-- TF-IDF Vectorization
-- Cosine Similarity
+```text
+Flower Dataset
+      │
+      ▼
+Image Caption Generation
+      │
+      ▼
+DenseNet121 Feature Extraction
+      │
+      ▼
+Store Captions + Image Features
+      │
+      ▼
+FastAPI Recommendation Engine
+      │
+      ▼
+Recommended Flower Images
+```
 
 ---
 
-## ⚙️ How It Works
+# 📄 image_desc_feat.py
 
-### Feature Extraction
+This script prepares the flower dataset before deployment.
 
-The system uses a pretrained DenseNet121 model:
+## Step 1: Load Dataset
+
+All flower images are loaded from the `jpg/` directory together with metadata stored in `Image_data.csv`.
 
 ```python
-model = models.densenet121(weights='DEFAULT')
-feature_extractor = model.features
+img_dir = os.listdir("jpg/")
 ```
 
-For every image:
+---
 
-1. Resize image
-2. Normalize image
-3. Extract feature maps
-4. Apply Global Average Pooling
-5. Store feature vectors
+## Step 2: Image Caption Generation
+
+A pretrained **VisionEncoderDecoderModel** (`nlpconnect/vit-gpt2-image-captioning`) generates natural language descriptions for every flower image.
+
+Example
+
+```text
+Input Image
+
+↓
+
+"A yellow sunflower blooming in a garden."
+```
+
+These captions provide semantic information that is later used for text-based recommendation.
 
 ---
 
-### Text Retrieval Pipeline
+## Step 3: Flower Name Replacement
 
-1. Read image names from dataset.
-2. Convert image names into text descriptions.
-3. Apply TF-IDF vectorization.
-4. Match user query against dataset descriptions.
-5. Return the highest-ranked image.
+Sometimes the caption contains the generic word **flower**.
 
----
+The script replaces it with the actual flower name from the dataset.
 
-### Image Retrieval Pipeline
+Example
 
-1. Upload image through API.
-2. Extract DenseNet features.
-3. Compute cosine similarity against all dataset images.
-4. Retrieve top-N most similar images.
-5. Return combined recommendation image.
+```text
+Generated Caption
 
----
+"A beautiful flower"
 
-## 📊 Similarity Metric
+↓
 
-Cosine Similarity is used for image matching:
+"A beautiful sunflower"
+```
 
-\[
-Similarity(A,B)=\frac{A \cdot B}{||A|| ||B||}
-\]
-
-Higher values indicate greater visual similarity.
+This improves recommendation accuracy.
 
 ---
 
-## 🔌 API Endpoints
+## Step 4: Image Feature Extraction
 
-### Text-to-Image Search
+A pretrained **DenseNet121** model is used as a feature extractor.
+
+The classification layer is ignored, and only convolutional features are extracted.
+
+Processing pipeline
+
+```text
+Image
+
+↓
+
+Resize
+
+↓
+
+Center Crop
+
+↓
+
+Normalize
+
+↓
+
+DenseNet121
+
+↓
+
+1024-Dimensional Feature Vector
+```
+
+These embeddings capture the visual characteristics of every flower image.
+
+---
+
+## Step 5: Store Features
+
+For every image, the following information is stored:
+
+- Image ID
+- Image Name
+- Generated Caption
+- DenseNet Feature Vector
+
+The image embeddings are stored using
+
+```python
+torch.save()
+```
+
+This avoids recomputing image features during inference, significantly improving API response time.
+
+---
+
+# 📄 app.py
+
+This file implements the FastAPI backend that exposes recommendation APIs.
+
+At startup, the application loads:
+
+- Image descriptions
+- Image names
+- Precomputed DenseNet feature vectors
+
+This ensures fast recommendations without running the feature extraction pipeline repeatedly.
+
+---
+
+# 🔍 Text-Based Recommendation
+
+**Endpoint**
 
 ```http
 GET /image type
 ```
 
-#### Parameters
+### Input Parameters
 
-| Parameter | Type | Description |
-|------------|------|-------------|
-| text | string | Search query |
-| number_of_images | int | Number of images to retrieve |
+| Parameter | Description |
+|----------|-------------|
+| Image_Description | Text query |
+| Number_Of_Images | Number of recommendations |
 
-#### Example
+Example
 
-```http
-GET /image type?text=red flower
+```text
+yellow flower with green leaves
 ```
+
+### Workflow
+
+```text
+User Query
+
+↓
+
+Convert to Lowercase
+
+↓
+
+TF-IDF Vectorization
+
+↓
+
+Keyword Matching
+
+↓
+
+Rank Similar Captions
+
+↓
+
+Return Top-N Images
+```
+
+The API converts the user query into TF-IDF vectors and compares it with all generated image captions.
+
+Images with the highest matching scores are combined into a single image and returned.
 
 ---
 
-### Image Recommendation
+# 🖼 Image-Based Recommendation
+
+**Endpoint**
 
 ```http
 POST /add_image
 ```
 
-#### Form Data
+### Input Parameters
 
-| Parameter | Type |
-|------------|------|
-| upload_image | Image File |
-| Number_of_images | Integer |
+| Parameter | Description |
+|----------|-------------|
+| upload_image | Flower image |
+| Number_of_images | Number of recommendations |
 
-#### Example
+### Workflow
 
-```bash
-curl -X POST \
--F "upload_image=@test.jpg" \
--F "Number_of_images=5" \
-http://localhost:8000/add_image
+```text
+Upload Image
+
+↓
+
+Resize & Normalize
+
+↓
+
+DenseNet121
+
+↓
+
+Feature Vector
+
+↓
+
+Cosine Similarity
+
+↓
+
+Top-N Similar Images
+```
+
+The uploaded image is converted into a DenseNet feature vector and compared against all stored feature vectors using cosine similarity.
+
+The most visually similar flower images are returned.
+
+---
+
+# 🤖 AI Models Used
+
+## 1. VisionEncoderDecoder (ViT-GPT2)
+
+Model
+
+```text
+nlpconnect/vit-gpt2-image-captioning
+```
+
+Purpose
+
+- Automatic image caption generation
+- Semantic understanding of flower images
+
+---
+
+## 2. DenseNet121
+
+Purpose
+
+- Deep visual feature extraction
+- Represent images as numerical embeddings
+
+Output
+
+```text
+1024-Dimensional Feature Vector
 ```
 
 ---
 
-## 📦 Installation
+## 3. TF-IDF Vectorizer
 
-### Clone Repository
+Used for
+
+- Text representation
+- Keyword matching
+- Text similarity
+
+---
+
+## 4. Cosine Similarity
+
+Used for
+
+- Image similarity search
+
+Similarity values closer to **1** indicate visually similar images.
+
+---
+
+# 🚀 Installation
+
+Clone the repository
 
 ```bash
-git clone https://github.com/yourusername/image-recommendation-system.git
+git clone <repository-url>
 
-cd image-recommendation-system
+cd Flower-Recommendation-System
 ```
 
-### Install Dependencies
+Create a virtual environment
+
+```bash
+python -m venv .venv
+```
+
+Activate environment
+
+### Windows
+
+```bash
+.venv\Scripts\activate
+```
+
+### Linux
+
+```bash
+source .venv/bin/activate
+```
+
+Install dependencies
 
 ```bash
 pip install -r requirements.txt
 ```
 
----
-
-## ▶️ Run Application
-
-```bash
-python app.py
-```
-
-or
+Run FastAPI
 
 ```bash
 uvicorn app:app --reload
 ```
 
-Application will be available at:
-
-```text
-http://127.0.0.1:8000
-```
-
-Interactive API documentation:
+Open Swagger documentation
 
 ```text
 http://127.0.0.1:8000/docs
@@ -222,38 +417,44 @@ http://127.0.0.1:8000/docs
 
 ---
 
-## 📈 Future Improvements
+# 📌 API Summary
 
-- Multi-image recommendations
-- Hybrid text + image retrieval
-- CLIP-based multimodal search
-- FAISS indexing for large-scale datasets
-- User feedback and relevance ranking
-- Docker deployment
+| Endpoint | Method | Description |
+|----------|--------|-------------|
+| `/image type` | GET | Recommend images using text |
+| `/add_image` | POST | Recommend images using uploaded image |
 
 ---
 
-## 🎯 Applications
+# 📈 Future Improvements
 
-- E-commerce product recommendation
-- Fashion image retrieval
-- Artwork search
-- Visual search engines
-- Medical image similarity search
-- Digital asset management
-
----
-
-## 👨‍💻 Author
-
-**Vaibhav Solanke**
-
-- Data Science & Machine Learning Enthusiast
-- Computer Vision Researcher
-- FastAPI & Deep Learning Developer
+- Replace TF-IDF with Sentence Transformers or CLIP embeddings.
+- Integrate FAISS for large-scale vector search.
+- Support batch image recommendations.
+- Deploy using Docker.
+- Cloud deployment using Azure, GCP, or AWS.
+- Add user authentication.
+- Improve recommendations using multimodal embeddings.
 
 ---
 
-## 📜 License
+# 🎯 Applications
 
-This project is licensed under the MIT License.
+- Botanical image retrieval
+- Plant identification
+- Flower recommendation systems
+- Educational applications
+- Image search engines
+- AI-powered e-commerce recommendation systems
+
+---
+
+# 📄 License
+
+This project is developed for educational and research purposes. Feel free to modify and extend it according to your requirements.
+
+---
+
+# 👨‍💻 Author
+
+Developed using **FastAPI**, **PyTorch**, **Hugging Face Transformers**, and **DenseNet121** to demonstrate multimodal AI for image captioning, feature extraction, and intelligent flower image recommendation.
