@@ -72,8 +72,6 @@ model_densenet121 = models.densenet121(weights='DEFAULT')
 model_densenet121.eval()
 feature_extractor = model_densenet121.features
 img_feat = np.vstack(img_f)
-print(img_feat)
-print(df_master[['Image_Name','Image_Features']])
 
 @app.post("/add_image")
 async def img_reccomondation(upload_image: UploadFile = File(...),Number_of_images:int = Form(...)):
